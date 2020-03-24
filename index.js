@@ -1,13 +1,21 @@
 const prompt = require('prompt')
 const colors = require('colors/safe')
 const jsonfile = require('jsonfile')
-const { addRecord, setup } = require('./fns')
+const _ = require('lodash')
+const { addRecord, setup, viewRecords } = require('./fns')
 
 prompt.start()
 
 prompt.message = ''
 prompt.delimiter = colors.cyan(' >')
 
+
+let records = []
+let averageEff = 0
+try {
+    records = jsonfile.readFileSync('./records.dat').records
+    averageEff = Math.round(_.mean(_.map(records, ({ whPerMile }) => whPerMile)))
+} catch (e) { }
 
 const loop = (setupData, done) => {
     console.log(`\n\n\n\n\n    
@@ -17,16 +25,27 @@ const loop = (setupData, done) => {
     Battery:            ${colors.yellow(setupData.capacity + ' wh')}
     Max Charge:         ${colors.green(setupData.maxCharge + ' v')}
     Lowest Charge:      ${colors.red(setupData.lowCharge + ' v')}
+    Average wh/mi:       ${colors.cyan(averageEff + 'wh/mi')}
+    \n\n
 1. Change Setup
 2. Add Record
+3. View Records
+4. Quit
     `)
     
     prompt.get(['Choice'], (err, { Choice }) => {
-        const c = parseInt(Choice) === 1
-        if (c) {
-            setup(done)
-        } else {
-            addRecord(setupData, done)
+        switch (parseInt(Choice)) {
+            case 1:
+                setup(done)
+                break
+            case 2:
+                addRecord(setupData, done)
+                break
+            case 3:
+                viewRecords(done)
+                break
+            case 4:
+                process.exit(1)
         }
     })
 }
